@@ -1,61 +1,70 @@
-'use strict'
-
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow,ipcMain,screen,desktopCapturer,dialog} from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const fs = require('fs')
 
-// Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
+let screenShot,win
+const createScreenShot=async()=>{
+    // if(screenShot) return
+    screenShot= new BrowserWindow({
+      autoHideMenuBar: true, // 自动隐藏菜单栏
+      useContentSize: true, // width 和 height 将设置为 web 页面的尺寸
+      movable: false, // 是否可移动
+      frame: false, // 无边框窗口
+      resizable: false, // 窗口大小是否可调整
+      hasShadow: false, // 窗口是否有阴影
+      transparent: true, // 使窗口透明
+      fullscreenable: true, // 窗口是否可以进入全屏状态
+      fullscreen: true, // 窗口是否全屏
+      simpleFullscreen: true, // 在 macOS 上使用 pre-Lion 全屏
+      alwaysOnTop: false, // 窗口是否永远在别的窗口的上面
+    webPreferences: {
+      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
+    }
+  })
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    await screenShot.loadURL(process.env.WEBPACK_DEV_SERVER_URL+'screenShot.html')
+  } else {
+    createProtocol('app')
+    screenShot.loadURL('app://./screenShot.html')//加载页面
+  }
+}
 
 async function createWindow() {
-  // Create the browser window.
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      
-      // Use pluginOptions.nodeIntegration, leave this alone
-      // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
     }
   })
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
-    if (!process.env.IS_TEST) win.webContents.openDevTools()
   } else {
     createProtocol('app')
-    // Load the index.html when not in development
     win.loadURL('app://./index.html')
   }
 }
 
-// Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
 app.on('activate', () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
-    // Install Vue Devtools
     try {
       await installExtension(VUEJS_DEVTOOLS)
     } catch (e) {
@@ -65,7 +74,6 @@ app.on('ready', async () => {
   createWindow()
 })
 
-// Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
   if (process.platform === 'win32') {
     process.on('message', (data) => {
@@ -79,3 +87,54 @@ if (isDevelopment) {
     })
   }
 }
+
+//与截图功能相关的ipcMain
+ipcMain.on('openScreenShot',async()=>{
+    win.hide()//主窗口隐藏
+    // 创建一个全屏且隐藏菜单栏的窗口。
+    createScreenShot()
+})
+
+ipcMain.on('getFullScreen',async() => {
+  //获取屏幕大小,以及缩放因子scaleFactor。
+  const { size, scaleFactor } = screen.getPrimaryDisplay()
+  const sources = await desktopCapturer.getSources({
+    types:['screen'],
+    thumbnailSize: {
+      width:size.width*scaleFactor,
+      height:size.height*scaleFactor
+    }
+  })
+  // 向渲染进程发送屏幕截图
+  let data = sources[0].thumbnail.toDataURL()
+  screenShot.webContents.send('sendFullScreen',data,size)
+})
+
+ipcMain.on('closeScreenShot',(e,type)=>{
+  screenShot.destroy()
+  if(!type) win.show()
+})
+
+ipcMain.on('openDialog',(e,message,url)=>{
+  if(message=='save'){
+    dialog.showSaveDialog({
+      defaultPath: '截图.jpg',
+      filters: [{ name: 'Images', extensions: ['jpg'] }]
+    }).then((result) => {
+      if (!result.canceled) {
+        // 将截图数据保存到文件
+        const data = url.replace(/^data:image\/png;base64,/,'')
+        fs.writeFile(result.filePath, data, 'base64', (error) => {
+          if (error) {
+            console.error('Failed to save screenshot:', error)
+          } else {
+            console.log('Screenshot saved:', result.filePath)
+            screenShot.destroy()
+          }
+        })
+      }
+    }).catch((error) => {
+      console.error('Save screenshot dialog error:', error)
+    })
+  }
+})
