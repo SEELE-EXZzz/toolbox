@@ -1,5 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
-// const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 module.exports = defineConfig({
   pages: {
     main: {
@@ -7,6 +7,12 @@ module.exports = defineConfig({
       template: 'public/index.html',
       filename: 'index.html',
       title: 'Home Page'
+    },
+    stickyNote: {
+      entry: 'src/modules/stickyNote/main.js',
+      template: 'public/stickyNote.html',
+      filename: 'stickyNote.html',
+      title: 'stickyNote Page'
     },
     screenShot: {
       entry: 'src/modules/screenShot/main.js',
@@ -31,6 +37,3 @@ module.exports = defineConfig({
     }
   }
 })
-// module.exports = defineConfig({
-//   ,
-// })

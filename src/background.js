@@ -2,14 +2,45 @@ import { app, protocol, BrowserWindow,ipcMain,screen,desktopCapturer,dialog} fro
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const Store = require('electron-store')
 const fs = require('fs')
+const stickyNoteStore = new Store({name: 'stickyNote'})
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
-let screenShot,win
+let screenShot,win,stickyNote
+
+//创建便利贴函数
+const createStickyNote = async(width,height)=>{
+  stickyNote = new BrowserWindow({
+    autoHideMenuBar:true,  
+    frame:false,
+    width:200,
+    height:200,
+    maxHeight:200,
+    maxWidth:200,
+    minHeight:200,
+    minWidth:200,
+    x:width,
+    y:height,
+    webPreferences: {
+      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
+    }
+  })
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    await stickyNote.loadURL(process.env.WEBPACK_DEV_SERVER_URL+'stickyNote.html')
+  } else {
+    createProtocol('app')
+    stickyNote.loadURL('app://./stickyNote.html')//加载页面
+  }
+  let id = stickyNote.id
+  stickyNote.webContents.send('sendStickyData',id,width,height)
+}
+
+//创建截图函数
 const createScreenShot=async()=>{
-    // if(screenShot) return
     screenShot= new BrowserWindow({
       autoHideMenuBar: true, // 自动隐藏菜单栏
       useContentSize: true, // width 和 height 将设置为 web 页面的尺寸
@@ -32,7 +63,6 @@ const createScreenShot=async()=>{
   } else {
     createProtocol('app')
     screenShot.loadURL('app://./screenShot.html')//加载页面
-    screenShot.show()
   }
 }
 
@@ -45,7 +75,6 @@ async function createWindow() {
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
     }
   })
-
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
   } else {
@@ -89,7 +118,10 @@ if (isDevelopment) {
   }
 }
 
-//与截图功能相关的ipcMain
+/*
+  与截图功能相关的ipcMain
+ */
+
 ipcMain.on('openScreenShot',async()=>{
     win.hide()//主窗口隐藏
     // 创建一个全屏且隐藏菜单栏的窗口。
@@ -139,3 +171,26 @@ ipcMain.on('openDialog',(e,message,url)=>{
     })
   }
 })
+
+/*
+  与便利贴相关的ipcMain
+*/
+
+ipcMain.on('openStickyNote',()=>{
+    let {width,height} = screen.getPrimaryDisplay().size
+    createStickyNote(width-220,20)
+})
+
+ipcMain.on('closeStickyNote',(e,id)=>{
+  BrowserWindow.fromId(id).close()
+})
+
+ipcMain.on('getStickyNoteMovePostion',(e,id,x,y)=>{
+  console.log(x,y)
+  BrowserWindow.fromId(id).setPosition(x,y)
+})
+
+/*
+  与设置相关的ipcMain
+*/
+

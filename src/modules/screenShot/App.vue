@@ -15,6 +15,7 @@
             width: (endX-startX) + 'px',
             height: (endY-startY) + 'px',
         }"></canvas>
+        <canvas id="textCanvas"></canvas>
         <canvas id="clearCanvas" v-show="isShowClearCanvas" :style="{
             position: 'absolute',
             left: clearX - (clearWidth/2) + 'px',
@@ -85,7 +86,7 @@
 <script>
 import { ipcRenderer } from 'electron'
 //canvas为截图画布，img显示截图
-let canvas,ctx,img,drawCanvas,drawctx
+let canvas,ctx,img,drawCanvas,drawctx,textCanvas,textctx
 const devicePixelRatio = window.devicePixelRatio
 export default{
     data(){
@@ -135,8 +136,31 @@ export default{
             textarea.style.position = 'absolute'
             textarea.style.left = e.clientX + 'px'
             textarea.style.top = e.clientY + 'px'
+            textarea.style.backgroundColor = 'transparent'
+            textarea.style.border = 'none'
+            textarea.style.overflow = 'hidden'
+            textarea.style.resize = 'none'
+            textarea.style.fontSize = 16+'px'
+            textarea.style.fontFamily = 'sans-serif'
+            textarea.style.lineHeight = 1
+            textarea.spellcheck = false
+            textarea.addEventListener('input',(e)=>{
+                let value = e.target.value,line = 1,reg = /\n/g,textarea = e.target,max = 0
+                textctx.font = '16px sans-serif'       
+                value.split(reg).forEach((v)=>{
+                    let width = textctx.measureText(v).width
+                    if(width>max) max = width
+                })
+                if(value.match(reg)) line += value.match(reg).length
+                textarea.style.height = 'auto'
+                textarea.style.height = textarea.scrollHeight+'px'
+                textarea.style.width = max+'px'
+            })
+            textarea.addEventListener('blur',(e)=>{
+                if(!e.target.value) e.target.remove()
+            })
             document.body.appendChild(textarea)
-        },
+        },//创建文本
         closeScreenShot(){
             ipcRenderer.send('closeScreenShot',this.isShortsCut)
         }, //关闭窗口函数
@@ -150,7 +174,16 @@ export default{
             canvas.height = height
             ctx.drawImage(img,startX,startY,width,height,0,0,width,height)
         },//画布获取截图
-        
+        getTextScreenShotImage(arr){
+            arr.forEach((textarea)=>{
+                ctx.font = '16px sans-serif'
+                let text = textarea.value
+                let {left,top} = textarea.getBoundingClientRect()
+                let x = (left - this.startX)*devicePixelRatio
+                let y = (top - this.startY)*devicePixelRatio
+                ctx.fillText(text,x,y)
+            })
+        },//将文本写入截图
         //一级设置相关的函数
 
         editScreenShot(){
@@ -160,6 +193,8 @@ export default{
         },//进入编辑截图
         async copyToclipboard(){
             this.getScreenShotImage()
+            let textarea = document.querySelectorAll('textarea')
+            if(textarea)this.getTextScreenShotImage(textarea)
             if(drawCanvas)await ctx.drawImage(drawCanvas,0,0,drawCanvas.width,drawCanvas.height)
             //将canvas变成blob对象，然后使用clipboard复制到剪切板中
             canvas.toBlob((blob)=>{
@@ -170,6 +205,8 @@ export default{
         },//复制到剪切板
         async saveScreenShot(){
            this.getScreenShotImage()
+           let textarea = document.querySelectorAll('textarea')
+           if(textarea)this.getTextScreenShotImage(textarea)
            if(drawCanvas)await ctx.drawImage(drawCanvas,0,0,drawCanvas.width,drawCanvas.height)
            let url = canvas.toDataURL()
            ipcRenderer.send('openDialog','save',url)
@@ -188,11 +225,12 @@ export default{
         clearScreenShot(){
             this.isSelect = 'clear'
             this.isShowClearCanvas = true
-        },
+        },//橡皮擦
         textScreenShot(){
             this.isSelect = 'text'
-
-        },
+            textCanvas = document.getElementById('textCanvas')
+            textctx = textCanvas.getContext('2d')
+        },//文本
         withdraw(){
             this.isShowFirstSetting = true
             this.isShowSecondSetting = false
@@ -265,7 +303,7 @@ export default{
         //截图框移动
         
         moveStartPostion(e){
-            if(this.isSelect==='text') this.createTextArea()
+            if(this.isSelect==='text') this.createTextArea(e)
             if(this.isSelect==='draw'||this.isSelect==='clear') this.startMoveOnCanvas(e)
             if(this.moveShowCutScreen||this.stopMoveCutScreen) return
             this.moveShowCutScreen = true
