@@ -4,7 +4,7 @@
         <div id="shade" :style="{
             position: 'absolute',
             width: fullScreenWidth + 'px',
-            height: fullScreenHeigh + 'px',
+            height: fullScreenHeight + 'px',
             backgroundColor: 'rgba(0,0,0,0.4)'
         }" v-show="isShowShade"></div>
         <canvas id="screenShot" v-show="isShowScreenShotCanvas"></canvas>
@@ -14,6 +14,14 @@
             top: startY + 'px',
             width: (endX-startX) + 'px',
             height: (endY-startY) + 'px',
+        }"></canvas>
+        <canvas id="clearCanvas" v-show="isShowClearCanvas" :style="{
+            position: 'absolute',
+            left: clearX - (clearWidth/2) + 'px',
+            top: clearY - (clearHeight/2) + 'px',
+            width: clearWidth + 'px',
+            height: clearHeight + 'px',
+            border:'2px solid black'
         }"></canvas>
         <div v-show="isShowScreenShotBorder" id="screenShotBorder" :style="{
             position: 'absolute',
@@ -55,6 +63,18 @@
             <button @click="drawScreenShot" title="画笔">
                 <svg t="1693921728717" class="icon" viewBox="0 0 1029 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="32922" width="30" height="30"><path d="M990.595227 285.308773 742.947854 35.944695C696.221042-11.103373 616.792202-11.103373 570.061087 35.944695L93.450756 511.155272C74.766342 525.267541 65.415529 544.086768 60.74586 567.60865L0 915.784426C0 944.013266 9.345076 976.946196 28.033793 995.77116 46.729681 1014.58465 70.083765 1024 98.131899 1024L112.146644 1024 457.914443 962.833927C481.278566 958.125535 499.975888 948.715922 513.989199 929.900997L990.593793 454.691854C1013.95935 431.164235 1027.974095 402.933961 1027.974095 370.002465 1027.975529 337.063798 1013.960784 308.837826 990.595227 285.308773L990.595227 285.308773ZM448.573669 868.729188 98.126162 929.900997 158.864852 581.726655 509.315227 233.552314 799.024045 520.560583 448.573669 868.729188 448.573669 868.729188ZM925.178263 388.817389 859.764168 459.400246 570.061087 172.390543 635.475182 106.520381C644.821692 97.112202 663.511843 97.112202 677.525154 106.520381L925.178263 355.885894C929.853669 360.594286 934.524773 370.002465 934.524773 374.70512 934.524773 379.407776 929.855104 384.116168 925.178263 388.817389L925.178263 388.817389Z" fill="#272536" p-id="32923"></path></svg>
             </button>
+            <button @click="clearScreenShot" title="橡皮擦">
+                <svg t="1693964400306" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7086" width="30" height="30"><path d="M959.33 499.14L592.17 132.62 64.67 659.19 311.2 891.38h528.06v-67.83H634.35z m-95.83 0L604.69 757.5 333.35 486.64l258.82-258.36zM337.94 823.55l-176-165.78 123.52-123.3 271.31 270.86-18.25 18.22z" fill="#333333" p-id="7087"></path></svg>
+            </button>
+            <button @click="textScreenShot" title="文本">
+                <svg t="1693964348267" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5245" width="30" height="30"><path d="M885.005342 152.185075c0 16.95823-13.750165 30.707372-30.709419 30.707372L169.703053 182.892447c-16.95823 0-30.708396-13.749142-30.708396-30.707372l0 0c0-16.959254 13.750165-30.708396 30.708396-30.708396l684.59287 0C871.255177 121.475656 885.005342 135.224798 885.005342 152.185075L885.005342 152.185075 885.005342 152.185075zM512.002047 902.523321c-16.963347 0-30.708396-13.745049-30.708396-30.707372L481.293651 153.189961c0-16.959254 13.746072-30.708396 30.708396-30.708396l0 0c16.95823 0 30.704302 13.749142 30.704302 30.708396l0 718.630081C542.706349 888.778272 528.960277 902.523321 512.002047 902.523321L512.002047 902.523321 512.002047 902.523321z" fill="#272636" p-id="5246"></path></svg>
+            </button>
+            <button @click="copyToclipboard" title="复制到剪切版并关闭">
+                <svg t="1693910864640" class="icon" viewBox="0 0 1025 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7884" width="30" height="30"><path d="M1011.2 186.181818c-13.963636-13.963636-37.236364-13.963636-51.2 0l-577.163636 577.163637-321.163637-316.509091c-13.963636-13.963636-37.236364-13.963636-51.2 0-13.963636 13.963636-13.963636 37.236364 0 51.2l344.436364 344.436363c13.963636 13.963636 37.236364 13.963636 51.2 0l605.090909-605.090909c13.963636-13.963636 13.963636-37.236364 0-51.2z" p-id="7885"></path></svg>
+            </button>
+            <button @click="saveScreenShot" title="保存">
+                <svg t="1693918820464" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17508" width="30" height="30"><path d="M925.248 356.928l-258.176-258.176a64 64 0 0 0-45.248-18.752H144a64 64 0 0 0-64 64v736a64 64 0 0 0 64 64h736a64 64 0 0 0 64-64V402.176a64 64 0 0 0-18.752-45.248zM288 144h192V256H288V144z m448 736H288V736h448v144z m144 0H800V704a32 32 0 0 0-32-32H256a32 32 0 0 0-32 32v176H144v-736H224V288a32 32 0 0 0 32 32h256a32 32 0 0 0 32-32V144h77.824l258.176 258.176V880z" p-id="17509"></path></svg>
+            </button>
             <button @click="withdraw" title="撤回">
                 <svg t="1693921117699" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="21985" width="30" height="30"><path d="M329.045333 137.685333a32 32 0 0 1 48.128 41.984l-2.858666 3.285334L215.893333 341.333333l158.421334 158.378667a32 32 0 0 1 2.858666 41.984l-2.858666 3.285333a32 32 0 0 1-41.984 2.858667l-3.285334-2.858667L148.053333 363.946667a32 32 0 0 1-2.858666-41.984l2.858666-3.242667 180.992-181.034667z" fill="#000000" p-id="21986"></path><path d="M640 309.333333a245.333333 245.333333 0 0 1 9.386667 490.496l-9.386667 0.170667H170.666667a32 32 0 0 1-4.352-63.701333L170.666667 736h469.333333a181.333333 181.333333 0 0 0 8.789333-362.453333L640 373.333333H170.666667a32 32 0 0 1-4.352-63.701333L170.666667 309.333333h469.333333z" fill="#000000" p-id="21987"></path></svg>
             </button>
@@ -71,22 +91,27 @@ export default{
     data(){
         return{
             fullScreenWidth:0, //窗口大小
-            fullScreenHeigh:0,
+            fullScreenHeight:0,
             isShortsCut:false,//是否是快捷键打开的窗口
             isShowScreenShotCanvas:false,//绘制截图的画布
             isShowShade:true,//黑幕遮罩
             isShowDrawCanvas:false,//画笔的画布
+            isShowClearCanvas:false,//橡皮擦
             /*
                 与设置相关的数据
             */
             isShowFirstSetting:false, //一级设置
             isShowSecondSetting:false, //编辑截图设置
-            CanvasEventListener:false, //画布有无设置鼠标监听事件
             /*
                 与画布相关的数据
             */
             isDrawing:false, //画笔有无落下
+            isClear:false,//橡皮擦有无落下
             isSelect:'', //当前的选择，画笔,橡皮擦等等
+            clearX:0, // 橡皮擦位置
+            clearY:0,
+            clearWidth:20,//橡皮擦大小
+            clearHeight:20,
             /*
                 与截图框有关的数据
             */
@@ -101,10 +126,17 @@ export default{
             startX:0, //截图框的位置
             startY:0,
             endX:0,
-            endY:0
+            endY:0,
         }
     },
     methods:{
+        createTextArea(e){
+            let textarea = document.createElement('textarea')
+            textarea.style.position = 'absolute'
+            textarea.style.left = e.clientX + 'px'
+            textarea.style.top = e.clientY + 'px'
+            document.body.appendChild(textarea)
+        },
         closeScreenShot(){
             ipcRenderer.send('closeScreenShot',this.isShortsCut)
         }, //关闭窗口函数
@@ -126,8 +158,9 @@ export default{
             this.isShowSecondSetting = true
             this.stopMoveCutScreen = true //当进入编辑截图时截图框不能移动
         },//进入编辑截图
-        copyToclipboard(){
+        async copyToclipboard(){
             this.getScreenShotImage()
+            if(drawCanvas)await ctx.drawImage(drawCanvas,0,0,drawCanvas.width,drawCanvas.height)
             //将canvas变成blob对象，然后使用clipboard复制到剪切板中
             canvas.toBlob((blob)=>{
                 navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(()=>{
@@ -135,8 +168,9 @@ export default{
                 }).catch((err)=>console.log(err))
             })          
         },//复制到剪切板
-        saveScreenShot(){
+        async saveScreenShot(){
            this.getScreenShotImage()
+           if(drawCanvas)await ctx.drawImage(drawCanvas,0,0,drawCanvas.width,drawCanvas.height)
            let url = canvas.toDataURL()
            ipcRenderer.send('openDialog','save',url)
         },//保存截图
@@ -144,24 +178,21 @@ export default{
         //二级设置相关的函数
 
         drawScreenShot(){
-            // let self = this
-            // drawCanvas = document.getElementById('drawScreenShotCanvas')
-            // drawctx = drawCanvas.getContext('2d')
-            // this.isShowDrawCanvas = true
-            // drawCanvas.width = this.width*devicePixelRatio
-            // drawctx.height = this.height*devicePixelRatio
-            // this.isSelect = 'draw'
-            // if(!this.CanvasEventListener){
-            //     drawCanvas.addEventListener('mousedown',(e)=>{
-            //         console.log('a')
-            //         self.startMoveOnCanvas(e)
-            //     } )
-            //     drawCanvas.addEventListener('mousemove',this.MoveOnCanvas())
-            //     drawCanvas.addEventListener('mouseup',this.stopMoveOnCanvas())    
-            // }
-            // this.CanvasEventListener = true
-
+            this.isShowDrawCanvas = true
+            drawCanvas = document.getElementById('drawScreenShotCanvas')
+            drawctx = drawCanvas.getContext('2d')
+            drawCanvas.width = this.width*devicePixelRatio
+            drawCanvas.height = this.height*devicePixelRatio
+            this.isSelect = 'draw'
         },//绘制截图
+        clearScreenShot(){
+            this.isSelect = 'clear'
+            this.isShowClearCanvas = true
+        },
+        textScreenShot(){
+            this.isSelect = 'text'
+
+        },
         withdraw(){
             this.isShowFirstSetting = true
             this.isShowSecondSetting = false
@@ -171,10 +202,13 @@ export default{
 
         startMoveOnCanvas(e){
             if(this.isSelect==='draw'){
-               if(this.isDrawing) return
-               this.isDrawing = true
-               drawctx.beginPath()
-               drawctx.moveTo(e.offsetX, e.offsetY)
+                if(this.isDrawing) return
+                this.isDrawing = true
+                drawctx.beginPath()
+                drawctx.moveTo(e.offsetX*devicePixelRatio, e.offsetY*devicePixelRatio)
+            }else if(this.isSelect==='clear'){
+                if(this.isClear) return
+                this.isClear = true
             }
         },
         MoveOnCanvas(e){
@@ -182,6 +216,11 @@ export default{
                 if(!this.isDrawing) return
                 drawctx.lineTo(e.offsetX*devicePixelRatio,e.offsetY*devicePixelRatio)
                 drawctx.stroke()
+            }else if(this.isSelect==='clear'){
+                if(!this.isClear) return
+                let x = (this.clearX - this.startX-(this.clearWidth/2))*devicePixelRatio
+                let y = (this.clearY - this.startY-(this.clearHeight/2))*devicePixelRatio
+                drawctx.clearRect(x,y,this.clearWidth,this.clearHeight)
             }
         },
         stopMoveOnCanvas(e){
@@ -189,6 +228,9 @@ export default{
                 if(!this.isDrawing) return
                 this.isDrawing = false
                 drawctx.closePath()
+            }else if(this.isSelect==='clear'){
+                if(!this.isClear) return
+                this.isClear = false
             }
         },
 
@@ -223,12 +265,19 @@ export default{
         //截图框移动
         
         moveStartPostion(e){
+            if(this.isSelect==='text') this.createTextArea()
+            if(this.isSelect==='draw'||this.isSelect==='clear') this.startMoveOnCanvas(e)
             if(this.moveShowCutScreen||this.stopMoveCutScreen) return
             this.moveShowCutScreen = true
             this.moveX = e.clientX - this.startX
             this.moveY = e.clientY - this.startY
         },
         movePostion(e){
+            if(this.isSelect==='clear'){
+                this.clearX = e.clientX
+                this.clearY = e.clientY
+            }
+            if(this.isSelect==='draw'||this.isSelect==='clear') this.MoveOnCanvas(e)
             if(!this.moveShowCutScreen||this.stopMoveCutScreen) return
             this.startX = Math.max((e.clientX - this.moveX),0) 
             this.startY = Math.max((e.clientY - this.moveY),0) 
@@ -238,14 +287,15 @@ export default{
             }else{
                 this.endX = this.startX + this.width
             }
-            if(this.startY+this.height>this.fullScreenHeigh){
-                this.endY = this.fullScreenHeigh
+            if(this.startY+this.height>this.fullScreenHeight){
+                this.endY = this.fullScreenHeight
                 this.startY = this.endY - this.height
             }else{
                 this.endY = this.startY + this.height
             }
         },
         moveEndPostion(){
+            if(this.isSelect==='draw'||this.isSelect==='clear') this.stopMoveOnCanvas()
             if(!this.moveShowCutScreen||this.stopMoveCutScreen) return
             this.moveShowCutScreen = false
         }
@@ -254,8 +304,8 @@ export default{
         ipcRenderer.send('getFullScreen')
         ipcRenderer.on('sendFullScreen', async(event,image,size) => { 
             const {width,height} = size
-            this.fullScreenWidth = width -4
-            this.fullScreenHeigh = height -4
+            this.fullScreenWidth = width 
+            this.fullScreenHeight = height 
             img = document.querySelector('img')
             img.src = image 
         })

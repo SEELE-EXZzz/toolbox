@@ -32,6 +32,7 @@ const createScreenShot=async()=>{
   } else {
     createProtocol('app')
     screenShot.loadURL('app://./screenShot.html')//加载页面
+    screenShot.show()
   }
 }
 
