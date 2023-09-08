@@ -1,46 +1,70 @@
-import { app, protocol, BrowserWindow,ipcMain,screen,desktopCapturer,dialog} from 'electron'
+import { app, protocol, BrowserWindow,ipcMain,screen,desktopCapturer,dialog,Tray,Menu,globalShortcut} from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const Store = require('electron-store')
 const fs = require('fs')
 const stickyNoteStore = new Store({name: 'stickyNote'})
+const shortsCutStore = new Store({name: 'shortsCut'})
+const settingShowStore = new Store({name: 'settingShow'})
+
+let screenShot,win,stickyNote,trayClose=false
+let showMainWindow = true,showStickyNote = true
+let stickyNoteIdList = [] //记录便利贴窗口的id，用于全部隐藏或关闭
+
+if(settingShowStore.size>0){
+  if(settingShowStore.has('showMainWindow')) showMainWindow = settingShowStore.get('showMainWindow')
+  if(settingShowStore.has('showStickyNote')) showStickyNote = settingShowStore.get('showStickyNote')
+}
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
-let screenShot,win,stickyNote
 
 //创建便利贴函数
-const createStickyNote = async(width,height)=>{
-  stickyNote = new BrowserWindow({
-    autoHideMenuBar:true,  
-    frame:false,
-    width:200,
-    height:200,
-    maxHeight:200,
-    maxWidth:200,
-    minHeight:200,
-    minWidth:200,
-    x:width,
-    y:height,
-    webPreferences: {
-      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
+const createStickyNote = ({width,height,content,key},show)=>{
+  return new Promise((res,rej)=>{
+    stickyNote = new BrowserWindow({
+      autoHideMenuBar:true,  
+      frame:false,
+      width:200,
+      height:200,
+      maxHeight:200,
+      maxWidth:200,
+      minHeight:200,
+      minWidth:200,
+      x:width,
+      y:height,
+      show:false,
+      webPreferences: {
+        nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+        contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
+      }
+    })
+    if(show) stickyNote.show
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+      stickyNote.loadURL(process.env.WEBPACK_DEV_SERVER_URL+'stickyNote.html')
+    } else {
+      createProtocol('app')
+      stickyNote.loadURL('app://./stickyNote.html')//加载页面
     }
+    let window = {
+      stickyNote,
+      width,
+      height,
+      content,
+      key,
+      id:stickyNote.id
+    }
+    stickyNoteIdList.push(stickyNote.id)
+    stickyNote.webContents.on('did-finish-load', () => {
+      res(window);
+    })
   })
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    await stickyNote.loadURL(process.env.WEBPACK_DEV_SERVER_URL+'stickyNote.html')
-  } else {
-    createProtocol('app')
-    stickyNote.loadURL('app://./stickyNote.html')//加载页面
-  }
-  let id = stickyNote.id
-  stickyNote.webContents.send('sendStickyData',id,width,height)
 }
 
 //创建截图函数
-const createScreenShot=async()=>{
+const createScreenShot=async(type)=>{
     screenShot= new BrowserWindow({
       autoHideMenuBar: true, // 自动隐藏菜单栏
       useContentSize: true, // width 和 height 将设置为 web 页面的尺寸
@@ -64,17 +88,109 @@ const createScreenShot=async()=>{
     createProtocol('app')
     screenShot.loadURL('app://./screenShot.html')//加载页面
   }
+  if(type) screenShot.webContents.send('isShortsCut',true)
+}
+
+// 根据electron-store创建便利贴
+const createStickyNoteList = ()=>{
+    if(stickyNoteStore.size>0){
+        let {width,height} = screen.getPrimaryDisplay().size
+        let noteheight = 20
+        let store = stickyNoteStore.store
+        let list = []
+        width -= 220
+        Object.entries(store).forEach(([key, value]) => {
+          if(noteheight+200>height){
+            width -=220
+            noteheight = 20
+          }
+          let stickyNoteData={
+              width,
+              height:noteheight,
+              key,
+              content:value
+          }
+          list.push(stickyNoteData)
+          noteheight+=220
+        })
+        Promise.all(list.map((data)=>createStickyNote(data,showStickyNote))).then((window)=>{
+          window.forEach((data)=>{
+            const {stickyNote,width,height,id,content,key} = data
+            stickyNote.webContents.send('sendStickyData',id,width,height,content,key)
+          })
+        })
+    }
+}
+
+//创建托盘
+const createTray=()=>{
+  const tray = new Tray('src/logo/软件logo.png')
+  tray.on('click',()=>win.show())
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '退出',
+      click: () => {
+        trayClose = true //标记为托盘退出此时应该退出
+        app.quit()// 退出应用程序
+      }
+    }
+  ])
+  tray.setContextMenu(contextMenu)
+  createWindow()
+  win.on('close',(e)=>{
+    if(!trayClose){
+      e.preventDefault()
+      win.hide()
+    }
+  })
+}
+
+//创建快捷键
+const createShortsCut=(name,value)=>{
+  if(name==='screenShotShortsCut'){
+    globalShortcut.register(value,()=>{
+      createScreenShot(true)
+    })
+  }else if(name==='createStickyNoteShortsCut'){
+    globalShortcut.register(value,()=>{
+      let width = screen.getPrimaryDisplay().size.width-220
+      let obj = {
+        width,
+        height:20,
+        content:'',
+        key:''
+      }
+      createStickyNote(obj,true).then((window)=>{
+        const {stickyNote,width,height,id,content,key} = window
+        stickyNote.webContents.send('sendStickyData',id,width,height,content,key)
+      })
+    })
+  }else if(name==='hideStickyNoteShortsCut'){
+    globalShortcut.register(value,()=>{
+        stickyNoteIdList.forEach((id)=>{
+          BrowserWindow.fromId(id).hide()
+        })
+    })
+  }else if(name==='showStickyNoteShortsCut'){
+    globalShortcut.register(value,()=>{
+        stickyNoteIdList.forEach((id)=>{
+          BrowserWindow.fromId(id).show()
+        })
+    })
+  }
 }
 
 async function createWindow() {
   win = new BrowserWindow({
     width: 800,
     height: 600,
+    show:false,
     webPreferences: {
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
     }
   })
+  if(showMainWindow) win.show()
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
   } else {
@@ -84,6 +200,7 @@ async function createWindow() {
 }
 
 app.on('window-all-closed', () => {
+  globalShortcut.unregisterAll()
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -101,7 +218,14 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
-  createWindow()
+  createTray() //创建托盘
+  createStickyNoteList() //根据electron-store创建便利贴
+  if(shortsCutStore.size>0){
+    let store = shortsCutStore.store
+    Object.entries(store).forEach(([key,value])=>{
+        createShortsCut(key,value)
+    })
+  }
 })
 
 if (isDevelopment) {
@@ -124,8 +248,7 @@ if (isDevelopment) {
 
 ipcMain.on('openScreenShot',async()=>{
     win.hide()//主窗口隐藏
-    // 创建一个全屏且隐藏菜单栏的窗口。
-    createScreenShot()
+    createScreenShot(false)
 })
 
 ipcMain.on('getFullScreen',async() => {
@@ -145,7 +268,7 @@ ipcMain.on('getFullScreen',async() => {
 
 ipcMain.on('closeScreenShot',(e,type)=>{
   screenShot.destroy()
-  if(!type) win.show()
+  if(!type) win.show() 
 })
 
 ipcMain.on('openDialog',(e,message,url)=>{
@@ -177,8 +300,17 @@ ipcMain.on('openDialog',(e,message,url)=>{
 */
 
 ipcMain.on('openStickyNote',()=>{
-    let {width,height} = screen.getPrimaryDisplay().size
-    createStickyNote(width-220,20)
+    let width = screen.getPrimaryDisplay().size.width-220
+    let data = {
+      width:width,
+      height:20,
+      content:'',
+      key:''
+    }
+    createStickyNote(data,true).then((window)=>{
+        const {stickyNote,width,height,id,content,key} = window
+        stickyNote.webContents.send('sendStickyData',id,width,height,content,key)
+    })
 })
 
 ipcMain.on('closeStickyNote',(e,id)=>{
@@ -186,7 +318,6 @@ ipcMain.on('closeStickyNote',(e,id)=>{
 })
 
 ipcMain.on('getStickyNoteMovePostion',(e,id,x,y)=>{
-  console.log(x,y)
   BrowserWindow.fromId(id).setPosition(x,y)
 })
 
@@ -194,3 +325,17 @@ ipcMain.on('getStickyNoteMovePostion',(e,id,x,y)=>{
   与设置相关的ipcMain
 */
 
+ipcMain.on('getShortsCut',(e,name,value)=>{
+    //如果electron-store记录了某个功能的快捷键,说明该功能之前有快捷键需将之前的快捷键注销。
+    if(shortsCutStore.has(name)) globalShortcut.unregister(value)
+    shortsCutStore.set(name,value)
+    createShortsCut(name,value)
+})
+
+ipcMain.on('deleteShortsCut',(e,name,value)=>{
+    //如果electron-store记录了某个功能的快捷键,则注销快捷键并删除electron-store相关键
+    if(shortsCutStore.has(name)){
+      globalShortcut.unregister(shortsCutStore.get(name))
+      shortsCutStore.delete(name)
+    }
+})

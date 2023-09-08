@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import {ipcRenderer} from 'electron'
+
 export default{
 
 }
@@ -27,15 +27,13 @@ export default{
     top: 10%;
     width: 25%;
     height: 60%;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4)
 }
 #rightSide{
     position: absolute;
-    left: 40%;
+    left: 35%;
     top: 10%;
-    width: 55%;
+    width: 60%;
     height: 80%;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4)
 }
 a {
   text-decoration: none; 

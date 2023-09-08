@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-      <textarea spellcheck=false></textarea>
+      <textarea spellcheck=false v-model="content"></textarea>
       <button @click="recordStickyNote" id="record">
         <svg t="1694008013900" class="icon" viewBox="0 0 1035 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="14476" width="26" height="26"><path d="M833.161206 82.125397H763.444285V59.235435c0-24.605317-19.949354-44.554671-44.554671-44.554671H316.081974c-24.605317 0-44.554671 19.949354-44.554671 44.554671v22.889962h-69.716921c-56.651264 0-102.731932 46.091807-102.731933 102.731932v734.428056c0 56.651264 46.091807 102.731932 102.731933 102.731932h631.350824c56.651264 0 102.731932-46.091807 102.731932-102.731932V184.857329c0-56.651264-46.091807-102.731932-102.731932-102.731932zM360.636644 103.790106H674.334943v30.330592H360.636644V103.790106z m486.147153 815.495279c0 7.518601-6.115129 13.622591-13.622591 13.62259H201.810382c-7.518601 0-13.622591-6.115129-13.622591-13.62259V184.857329c0-7.518601 6.115129-13.622591 13.622591-13.62259h69.716921v7.44063c0 24.605317 19.949354 44.554671 44.554671 44.554671H718.889614c24.605317 0 44.554671-19.949354 44.554671-44.554671v-7.44063h69.716921c7.518601 0 13.622591 6.115129 13.622591 13.62259v734.428056z m-70.841927-563.883914c0 24.605317-19.949354 44.554671-44.554671 44.55467H303.584388c-24.605317 0-44.554671-19.949354-44.55467-44.55467s19.949354-44.554671 44.55467-44.554671h427.802811c24.605317 0 44.554671 19.949354 44.554671 44.554671z m0 193.333855c0 24.605317-19.949354 44.554671-44.554671 44.554671H303.584388c-24.605317 0-44.554671-19.949354-44.55467-44.554671s19.949354-44.554671 44.55467-44.554671h427.802811c24.605317 0 44.554671 19.949354 44.554671 44.554671z m0 193.333856c0 24.605317-19.949354 44.554671-44.554671 44.55467H303.584388c-24.605317 0-44.554671-19.949354-44.55467-44.55467s19.949354-44.554671 44.55467-44.554671h427.802811c24.605317 0 44.554671 19.949354 44.554671 44.554671z" p-id="14477"></path></svg>
       </button>
@@ -20,21 +20,24 @@
             id:'',//窗口id
             key:'',//electron-store的键值
             ismove:false,
+            content:'',//便利贴的值
             moveX:'', //移动时鼠标与左边坐标的差值
             moveY:'',
-            x,//窗口的坐标
-            y
+            x:'',//窗口的坐标
+            y:''
         }
       },
       methods:{
         clearStickyNote(){
             ipcRenderer.send('closeStickyNote',this.id)
+            stickyNoteStore.delete(this.key)
         }, //清除便利贴
         recordStickyNote(){
             let value = document.querySelector('textarea').value
-            let time = Date.now()
+            let time = Date.now().toString()
             if(!this.key) this.key = time //如果键是空就赋予时间戳
             stickyNoteStore.set(this.key,value)
+            console.log(this.key)
         }, //记录便利贴内容
         /*
             与便利贴移动相关的函数
@@ -42,13 +45,13 @@
         getStartPostion(e){
             if(this.ismove) return
             this.ismove = true
-            this.moveX = e.clientX-this.x
-            this.moveY = e.clientY-this.y
+            this.moveX = e.clientX
+            this.moveY = e.clientY
         },
         getMovePostion(e){
             if(!this.ismove) return
-            let x = e.clientX-this.moveX
-            let y = e.clientY-this.moveY
+            let x = e.screenX-this.moveX
+            let y = e.screenY-this.moveY
             ipcRenderer.send('getStickyNoteMovePostion',this.id,x,y)
         },
         getlastPostion(){
@@ -57,7 +60,9 @@
         }
       },
       mounted(){
-        ipcRenderer.on('sendStickyData',(e,id,width,height)=>{
+        ipcRenderer.on('sendStickyData',(e,id,width,height,content,key)=>{
+            this.content = content
+            this.key = key
             this.x = width
             this.y = height
             this.id = id
@@ -82,10 +87,10 @@
         overflow: hidden;
     }
     textarea{
-        width: 200px;
-        height: 160px;
+        width: 190px;
+        height: 140px;
         border: 0px;
-        padding: 0px;
+        padding: 10px;
         overflow: hidden;
         resize: none;
         outline: none;
@@ -93,6 +98,7 @@
     }
     button{
         height: 30px;
+        margin: 4px;
     }
     #record{
         float: right;

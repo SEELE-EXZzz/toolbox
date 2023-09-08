@@ -11,10 +11,7 @@
 </template>
 
 <script>
-import {ipcRenderer} from 'electron'
-import appContents from '../../pages/appContents.vue'
 export default{
-    components:{appContents},
     data(){
       return{
           icon:'setting',
