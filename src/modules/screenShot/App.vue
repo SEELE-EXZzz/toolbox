@@ -99,15 +99,19 @@
             <button v-show="isSelect==='text'" v-for="size in textSizes" :id="'text'+size" class="secondButton" @click="changeSize(size,'text','textSize')">
                 {{ size }}px
             </button>
-            <button v-show="isSelect==='color'" v-for="color in colorList" :id="'color'+color" class="secondButton" :style="{backgroundColor:color,padding:10+'px'}" @click="changeSize(color,'color','colors')"></button>
-            <input @input="getsizeOrColorInput" v-model="sizeOrColorInput" v-show="isSelect" type="text" style="width: 44px;height: 25px;">
+            <button v-show="isSelect==='color'" v-for="color in colorList" :id="'color'+color" class="secondButton" :style="{
+                backgroundColor:color,
+                padding:10+'px'
+            }" @click="changeSize(color,'color','color')">
+            </button>
+            <input @input="getsizeOrColorInput" v-model="sizeOrColorInput" v-show="isSelect&&isSelect!='color'" type="text" style="width: 44px;height: 25px;">
         </div>
     </div>
 </template>
   
 <script>
 import { ipcRenderer } from 'electron'
-//canvas为截图画布，img显示截图
+//canvas为截图画布，img显示截图,drawCanvas为绘画画布,textCanvas为文本画布。
 let canvas,ctx,img,drawCanvas,drawctx,textCanvas,textctx
 const devicePixelRatio = window.devicePixelRatio
 export default{
@@ -148,7 +152,7 @@ export default{
             isShowScreenShotBorder:false,//显示截图框
             isShowCutScreen:false,
             moveShowCutScreen:false,//截图框是否移动
-            stopMoveCutScreen:false,//静止截图框移动
+            stopMoveCutScreen:false,//禁止截图框移动
             width:0, //截图框的宽度
             height:0,
             moveX:0, //移动截图框时鼠标与startX的差值
@@ -171,18 +175,18 @@ export default{
             textarea.style.resize = 'none'
             textarea.style.fontSize = this.textSize+'px'
             textarea.style.fontFamily = 'sans-serif'
-            textarea.style.lineHeight = 1
+            textarea.style.color = this.color
             textarea.spellcheck = false
             textarea.addEventListener('input',(e)=>{
                 let value = e.target.value,line = 1,reg = /\n/g,textarea = e.target,max = 0
-                textctx.font = '${this.textSize}px sans-serif'       
+                textctx.font = `${this.textSize}px sans-serif`
+                let actualBoundingBoxDescent = textctx.measureText(value).actualBoundingBoxDescent
                 value.split(reg).forEach((v)=>{
                     let width = textctx.measureText(v).width
                     if(width>max) max = width
                 })
                 if(value.match(reg)) line += value.match(reg).length
-                textarea.style.height = 'auto'
-                textarea.style.height = textarea.scrollHeight+'px'
+                textarea.style.height = (this.textSize+actualBoundingBoxDescent)*line+'px'
                 textarea.style.width = max+'px'
             })
             textarea.addEventListener('blur',(e)=>{
@@ -205,12 +209,14 @@ export default{
         },//画布获取截图
         getTextScreenShotImage(arr){
             arr.forEach((textarea)=>{
-                let size = textarea.style.fontSize
-                ctx.font = `${size}px sans-serif`
+                let size = parseInt(textarea.style.fontSize) 
                 let text = textarea.value
+                let color = textarea.style.color
+                ctx.font = `${size}px sans-serif`
+                ctx.fillStyle = color
                 let {left,top} = textarea.getBoundingClientRect()
-                let x = (left - this.startX)*devicePixelRatio
-                let y = (top - this.startY)*devicePixelRatio
+                let x = (left - this.startX)*devicePixelRatio + size
+                let y = (top - this.startY)*devicePixelRatio + size
                 ctx.fillText(text,x,y)
             })
         },//将文本写入截图
@@ -254,8 +260,9 @@ export default{
                 drawCanvas.width = this.width*devicePixelRatio
                 drawCanvas.height = this.height*devicePixelRatio
             }
-            document.getElementById('draw'+this.drawSize).style.backgroundColor='rgba(137,207,240,0.9)'
+            if(document.getElementById('draw'+this.drawSize)) document.getElementById('draw'+this.drawSize).style.backgroundColor='rgba(137,207,240,0.9)'
             this.sizeOrColorInput = this.drawSize
+            this.isShowClearCanvas = false
             this.isSelect = 'draw'
         },//绘制截图
         clearScreenShot(){
@@ -263,7 +270,7 @@ export default{
             document.getElementById('clear').style.backgroundColor='rgba(137,207,240,0.9)'
             this.isSelect = 'clear'
             this.sizeOrColorInput = this.clearSize
-            document.getElementById('clear'+this.clearSize).style.backgroundColor='rgba(137,207,240,0.9)' 
+            if(document.getElementById('clear'+this.clearSize)) document.getElementById('clear'+this.clearSize).style.backgroundColor='rgba(137,207,240,0.9)' 
             this.isShowClearCanvas = true
         },//橡皮擦
         textScreenShot(){
@@ -271,7 +278,8 @@ export default{
             document.getElementById('text').style.backgroundColor='rgba(137,207,240,0.9)'
             this.isSelect = 'text'
             this.sizeOrColorInput = this.textSize
-            document.getElementById('text'+this.textSize).style.backgroundColor='rgba(137,207,240,0.9)'
+            if(document.getElementById('text'+this.textSize)) document.getElementById('text'+this.textSize).style.backgroundColor='rgba(137,207,240,0.9)'
+            this.isShowClearCanvas = false
             if(!textctx){
                 textCanvas = document.getElementById('textCanvas')
                 textctx = textCanvas.getContext('2d')   
@@ -279,6 +287,7 @@ export default{
         },//文本
         colorScreenShot(){
             if(this.isSelect&&this.isSelect!='color') document.getElementById(this.isSelect).style.backgroundColor='white'
+            this.isShowClearCanvas = false
             this.isSelect = 'color'
         },
         getsizeOrColorInput(e){
@@ -324,14 +333,12 @@ export default{
                     }
                 })
                 this.textSize = input
-            }else if(this.isSelect==='color'){
-
             }
             this.sizeOrColorInput = input
         },  
         changeSize(size,type,types){
-            if(this.isSelect&&this.isSelect!=this.color){
-                document.getElementById(type+this[types]).style.backgroundColor = 'white'
+            if(this.isSelect&&this.isSelect!='color'){
+                if(document.getElementById(type+this[types])) document.getElementById(type+this[types]).style.backgroundColor = 'white'
                 document.getElementById(type+size).style.backgroundColor = 'rgba(137,207,240,0.9)'
                 this.sizeOrColorInput = size
             }
@@ -339,6 +346,7 @@ export default{
         },
         withdraw(){
             if(this.isSelect&&this.isSelect!='color') document.getElementById(this.isSelect).style.backgroundColor='white'
+            this.isShowClearCanvas = false
             this.isSelect = ''
             this.isShowFirstSetting = true
             this.isShowSecondSetting = false

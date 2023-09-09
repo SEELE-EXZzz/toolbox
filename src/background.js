@@ -9,7 +9,7 @@ const shortsCutStore = new Store({name: 'shortsCut'})
 const settingShowStore = new Store({name: 'settingShow'})
 
 let screenShot,win,stickyNote,trayClose=false
-let showMainWindow = true,showStickyNote = true
+let showMainWindow = true,showStickyNote = true,openScreenShot = false
 let stickyNoteIdList = [] //记录便利贴窗口的id，用于全部隐藏或关闭
 
 if(settingShowStore.size>0){
@@ -65,6 +65,8 @@ const createStickyNote = ({width,height,content,key},show)=>{
 
 //创建截图函数
 const createScreenShot=async(type)=>{
+    if(openScreenShot) return
+    openScreenShot = true
     screenShot= new BrowserWindow({
       autoHideMenuBar: true, // 自动隐藏菜单栏
       useContentSize: true, // width 和 height 将设置为 web 页面的尺寸
@@ -268,6 +270,7 @@ ipcMain.on('getFullScreen',async() => {
 
 ipcMain.on('closeScreenShot',(e,type)=>{
   screenShot.destroy()
+  openScreenShot = false
   if(!type) win.show() 
 })
 
@@ -286,6 +289,7 @@ ipcMain.on('openDialog',(e,message,url)=>{
           } else {
             console.log('Screenshot saved:', result.filePath)
             screenShot.destroy()
+            openScreenShot = false
           }
         })
       }
