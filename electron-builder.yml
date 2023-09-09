@@ -1,0 +1,6 @@
+appId: toolbox
+productName: chunxi
+copyright: Copyright © 2023 chunxi
+directories: 
+  buildResources: build   
+  output: dist
