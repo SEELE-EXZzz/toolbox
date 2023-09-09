@@ -220,6 +220,7 @@ export default{
                 ctx.fillText(text,x,y)
             })
         },//将文本写入截图
+
         //一级设置相关的函数
 
         editScreenShot(){
@@ -481,7 +482,7 @@ export default{
     }
 }
   
-  </script>
+</script>
   
   <style scoped>
   img{

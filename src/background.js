@@ -135,6 +135,7 @@ const createTray=()=>{
         trayClose = true //标记为托盘退出此时应该退出
         app.quit()// 退出应用程序
       }
+
     }
   ])
   tray.setContextMenu(contextMenu)
