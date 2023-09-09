@@ -3,6 +3,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const Store = require('electron-store')
+const path = require('path')
 const fs = require('fs')
 const stickyNoteStore = new Store({name: 'stickyNote'})
 const shortsCutStore = new Store({name: 'shortsCut'})
@@ -126,19 +127,22 @@ const createStickyNoteList = ()=>{
 
 //创建托盘
 const createTray=()=>{
-  const tray = new Tray('src/logo/软件logo.png')
-  tray.on('click',()=>win.show())
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: '退出',
-      click: () => {
-        trayClose = true //标记为托盘退出此时应该退出
-        app.quit()// 退出应用程序
+  try{
+    const tray = new Tray(path.join(__dirname, './bundled/TrayLogo.png'))
+    tray.on('click',()=>win.show())
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '退出',
+        click: () => {
+          trayClose = true //标记为托盘退出此时应该退出
+          app.quit()// 退出应用程序
+        }
       }
+    ])
+    tray.setContextMenu(contextMenu)  
+  }catch{
 
-    }
-  ])
-  tray.setContextMenu(contextMenu)
+  }
   createWindow()
   win.on('close',(e)=>{
     if(!trayClose){
@@ -198,7 +202,7 @@ async function createWindow() {
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
   } else {
     createProtocol('app')
-    win.loadURL('app://./index.html')
+    win.loadURL(`file://${__dirname}/index.html/`)
   }
 }
 

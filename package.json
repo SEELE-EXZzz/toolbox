@@ -2,15 +2,15 @@
   "name": "toolbox",
   "version": "1.0.0",
   "private": true,
+  "author": {
+    "name": "chunxi"
+  },
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "electron:build": "vue-cli-service electron:build",
     "start": "vue-cli-service electron:serve",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
-    "build-icon": "electron-icon-builder --input=./public/icon.png --output=build --flatten",
-    "pack": "electron-builder"
+    "build-icon": "electron-icon-builder --input=./public/icon.png --output=build --flatten"
   },
   "main": "background.js",
   "dependencies": {
@@ -30,7 +30,7 @@
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-plugin-vuex": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "electron": "^25.4.0",
+    "electron": "25.5.0",
     "electron-builder": "^24.6.4",
     "electron-devtools-installer": "^3.1.0",
     "electron-icon-builder": "^2.0.1",
