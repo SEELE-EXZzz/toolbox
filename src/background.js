@@ -127,8 +127,14 @@ const createStickyNoteList = ()=>{
 
 //创建托盘
 const createTray=()=>{
+  let icon 
   try{
-    const tray = new Tray(path.join(__dirname, './bundled/TrayLogo.png'))
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+      icon = path.join(__dirname,'./bundled/icon.png')
+    } else {
+      icon = path.join(__dirname, './icon.png')
+    }
+    const tray = new Tray(icon)
     tray.on('click',()=>win.show())
     const contextMenu = Menu.buildFromTemplate([
       {
