@@ -64,6 +64,7 @@ module.exports = defineConfig({
           }
         },
         win: {
+          requestedExecutionLevel: 'requireAdministrator',
           target: [
             'msi',
             'nsis'

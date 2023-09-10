@@ -8,8 +8,12 @@
                 <div class="flex-item-inner">
                     <span>截图:</span>
                     <input type="text" v-model="screenShotShortsCut" @input="getShortsCut($event,'screenShotShortsCut')" @keydown="getCtrlOrShift($event,'screenShotShortsCut')"> 
-                    <el-button type="primary" icon="el-icon-close" @click="clearShortsCut('screenShotShortsCut')"></el-button>
-                    <el-button type="primary" icon="el-icon-check" @click="recordShortsCut('screenShotShortsCut')"></el-button>
+                    <el-button type="primary" @click="clearShortsCut('screenShotShortsCut')">
+                        <svg t="1694330048103" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4022" width="14" height="14"><path d="M14.08 919.296L919.424 14.208l90.496 90.496L104.704 1009.92z" fill="#666666" p-id="4023"></path><path d="M104.704 14.08l905.088 905.216-90.496 90.496L14.08 104.704z" fill="#666666" p-id="4024"></path></svg>
+                    </el-button>
+                    <el-button type="primary" @click="recordShortsCut('screenShotShortsCut')">
+                        <svg t="1694330083734" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4999" width="14" height="14"><path d="M1013.696842 184.811146c-6.082532-6.082532-14.171768-9.43386-22.774703-9.43386s-16.692171 3.350304-22.775726 9.43386l-586.755588 586.756611-325.539284-325.537238c-6.083555-6.084579-14.172791-9.43693-22.776749-9.43693-8.602935 0-16.692171 3.351328-22.774703 9.434883-6.083555 6.082532-9.434883 14.172791-9.434883 22.775726 0 8.603959 3.349281 16.692171 9.43386 22.776749l347.610976 347.609952c6.082532 6.081509 14.171768 9.432837 22.773679 9.432837 0.236384 0 0.470721-0.01228 0.705058-0.017396 0.23536 0.005117 0.469698 0.017396 0.705058 0.017396 8.603959 0 16.692171-3.350304 22.775726-9.432837l608.826256-608.828302c6.083555-6.083555 9.43386-14.172791 9.43386-22.776749C1023.131725 198.98189 1019.78142 190.893678 1013.696842 184.811146z" p-id="5000"></path></svg>
+                    </el-button>
                 </div>
             </div>
             <div class="grid-item">
@@ -19,20 +23,32 @@
                 <div class="flex-item-inner">
                     <span>创建便利贴:</span>
                     <input type="text" v-model="createStickyNoteShortsCut" @input="getShortsCut($event,'createStickyNoteShortsCut')" @keydown="getCtrlOrShift($event,'createStickyNoteShortsCut')">  
-                    <el-button type="primary" icon="el-icon-close" @click="clearShortsCut('createStickyNoteShortsCut')"></el-button>
-                    <el-button type="primary" icon="el-icon-check" @click="recordShortsCut('createStickyNoteShortsCut')"></el-button>    
+                    <el-button type="primary" @click="clearShortsCut('createStickyNoteShortsCut')">
+                        <svg t="1694330048103" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4022" width="14" height="14"><path d="M14.08 919.296L919.424 14.208l90.496 90.496L104.704 1009.92z" fill="#666666" p-id="4023"></path><path d="M104.704 14.08l905.088 905.216-90.496 90.496L14.08 104.704z" fill="#666666" p-id="4024"></path></svg>
+                    </el-button>
+                    <el-button type="primary" @click="recordShortsCut('createStickyNoteShortsCut')">
+                        <svg t="1694330083734" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4999" width="14" height="14"><path d="M1013.696842 184.811146c-6.082532-6.082532-14.171768-9.43386-22.774703-9.43386s-16.692171 3.350304-22.775726 9.43386l-586.755588 586.756611-325.539284-325.537238c-6.083555-6.084579-14.172791-9.43693-22.776749-9.43693-8.602935 0-16.692171 3.351328-22.774703 9.434883-6.083555 6.082532-9.434883 14.172791-9.434883 22.775726 0 8.603959 3.349281 16.692171 9.43386 22.776749l347.610976 347.609952c6.082532 6.081509 14.171768 9.432837 22.773679 9.432837 0.236384 0 0.470721-0.01228 0.705058-0.017396 0.23536 0.005117 0.469698 0.017396 0.705058 0.017396 8.603959 0 16.692171-3.350304 22.775726-9.432837l608.826256-608.828302c6.083555-6.083555 9.43386-14.172791 9.43386-22.776749C1023.131725 198.98189 1019.78142 190.893678 1013.696842 184.811146z" p-id="5000"></path></svg>
+                    </el-button>    
                 </div>
                 <div class="flex-item-inner">
                     <span>隐藏全部便利贴:</span>
                     <input type="text" v-model="hideStickyNoteShortsCut" @input="getShortsCut($event,'hideStickyNoteShortsCut')" @keydown="getCtrlOrShift($event,'hideStickyNoteShortsCut')"> 
-                    <el-button type="primary" icon="el-icon-close" @click="clearShortsCut('hideStickyNoteShortsCut')"></el-button>
-                    <el-button type="primary" icon="el-icon-check" @click="recordShortsCut('hideStickyNoteShortsCut')"></el-button>                    
+                    <el-button type="primary" @click="clearShortsCut('hideStickyNoteShortsCut')">
+                        <svg t="1694330048103" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4022" width="14" height="14"><path d="M14.08 919.296L919.424 14.208l90.496 90.496L104.704 1009.92z" fill="#666666" p-id="4023"></path><path d="M104.704 14.08l905.088 905.216-90.496 90.496L14.08 104.704z" fill="#666666" p-id="4024"></path></svg>
+                    </el-button>
+                    <el-button type="primary" @click="recordShortsCut('hideStickyNoteShortsCut')">
+                        <svg t="1694330083734" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4999" width="14" height="14"><path d="M1013.696842 184.811146c-6.082532-6.082532-14.171768-9.43386-22.774703-9.43386s-16.692171 3.350304-22.775726 9.43386l-586.755588 586.756611-325.539284-325.537238c-6.083555-6.084579-14.172791-9.43693-22.776749-9.43693-8.602935 0-16.692171 3.351328-22.774703 9.434883-6.083555 6.082532-9.434883 14.172791-9.434883 22.775726 0 8.603959 3.349281 16.692171 9.43386 22.776749l347.610976 347.609952c6.082532 6.081509 14.171768 9.432837 22.773679 9.432837 0.236384 0 0.470721-0.01228 0.705058-0.017396 0.23536 0.005117 0.469698 0.017396 0.705058 0.017396 8.603959 0 16.692171-3.350304 22.775726-9.432837l608.826256-608.828302c6.083555-6.083555 9.43386-14.172791 9.43386-22.776749C1023.131725 198.98189 1019.78142 190.893678 1013.696842 184.811146z" p-id="5000"></path></svg>
+                    </el-button>                    
                 </div>
                 <div class="flex-item-inner">
                     <span>显示全部便利贴:</span>
                     <input type="text" v-model="showStickyNoteShortsCut" @input="getShortsCut($event,'showStickyNoteShortsCut')" @keydown="getCtrlOrShift($event,'showStickyNoteShortsCut')"> 
-                    <el-button type="primary" icon="el-icon-close" @click="clearShortsCut('showStickyNoteShortsCut')"></el-button>
-                    <el-button type="primary" icon="el-icon-check" @click="recordShortsCut('showStickyNoteShortsCut')"></el-button>                    
+                    <el-button type="primary"  @click="clearShortsCut('showStickyNoteShortsCut')">
+                        <svg t="1694330048103" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4022" width="14" height="14"><path d="M14.08 919.296L919.424 14.208l90.496 90.496L104.704 1009.92z" fill="#666666" p-id="4023"></path><path d="M104.704 14.08l905.088 905.216-90.496 90.496L14.08 104.704z" fill="#666666" p-id="4024"></path></svg>
+                    </el-button>
+                    <el-button type="primary" @click="recordShortsCut('showStickyNoteShortsCut')">
+                        <svg t="1694330083734" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4999" width="14" height="14"><path d="M1013.696842 184.811146c-6.082532-6.082532-14.171768-9.43386-22.774703-9.43386s-16.692171 3.350304-22.775726 9.43386l-586.755588 586.756611-325.539284-325.537238c-6.083555-6.084579-14.172791-9.43693-22.776749-9.43693-8.602935 0-16.692171 3.351328-22.774703 9.434883-6.083555 6.082532-9.434883 14.172791-9.434883 22.775726 0 8.603959 3.349281 16.692171 9.43386 22.776749l347.610976 347.609952c6.082532 6.081509 14.171768 9.432837 22.773679 9.432837 0.236384 0 0.470721-0.01228 0.705058-0.017396 0.23536 0.005117 0.469698 0.017396 0.705058 0.017396 8.603959 0 16.692171-3.350304 22.775726-9.432837l608.826256-608.828302c6.083555-6.083555 9.43386-14.172791 9.43386-22.776749C1023.131725 198.98189 1019.78142 190.893678 1013.696842 184.811146z" p-id="5000"></path></svg>
+                    </el-button>                    
                 </div>
             </div>
         </div>

@@ -42,7 +42,7 @@ const createStickyNote = ({width,height,content,key},show)=>{
         contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
       }
     })
-    if(show) stickyNote.show
+    if(show) stickyNote.show()
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       stickyNote.loadURL(process.env.WEBPACK_DEV_SERVER_URL+'stickyNote.html')
     } else {
@@ -193,6 +193,17 @@ const createShortsCut=(name,value)=>{
   }
 }
 
+//根据electron-store创建快捷键
+const createShortsCutList=()=>{
+  console.log(shortsCutStore.size)
+  if(shortsCutStore.size>0){
+    let store = shortsCutStore.store
+    Object.entries(store).forEach(([key,value])=>{
+       createShortsCut(key,value)
+    })
+  }
+}
+
 async function createWindow() {
   win = new BrowserWindow({
     width: 800,
@@ -233,12 +244,7 @@ app.on('ready', async () => {
   }
   createTray() //创建托盘
   createStickyNoteList() //根据electron-store创建便利贴
-  if(shortsCutStore.size>0){
-    let store = shortsCutStore.store
-    Object.entries(store).forEach(([key,value])=>{
-        createShortsCut(key,value)
-    })
-  }
+  createShortsCutList() //根据electron-store创建快捷键
 })
 
 if (isDevelopment) {

@@ -29,15 +29,14 @@
       },
       methods:{
         clearStickyNote(){
-            ipcRenderer.send('closeStickyNote',this.id)
             stickyNoteStore.delete(this.key)
+            ipcRenderer.send('closeStickyNote',this.id)  
         }, //清除便利贴
         recordStickyNote(){
             let value = document.querySelector('textarea').value
             let time = Date.now().toString()
             if(!this.key) this.key = time //如果键是空就赋予时间戳
             stickyNoteStore.set(this.key,value)
-            console.log(this.key)
         }, //记录便利贴内容
         /*
             与便利贴移动相关的函数
