@@ -347,6 +347,11 @@ export default{
         },
         withdraw(){
             if(this.isSelect&&this.isSelect!='color') document.getElementById(this.isSelect).style.backgroundColor='white'
+            drawctx.clearRect(0,0,drawCanvas.width,drawCanvas.height) //清空画布
+            let textareas = document.getElementsByTagName('textarea');
+            while (textareas.length > 0) {
+                textareas[0].parentNode.removeChild(textareas[0]);
+            }
             this.isShowClearCanvas = false
             this.isSelect = ''
             this.isShowFirstSetting = true
